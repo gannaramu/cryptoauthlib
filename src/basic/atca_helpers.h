@@ -50,9 +50,13 @@ ATCA_STATUS atcab_printbin_label(const char* label, uint8_t* binary, size_t bin_
 
 
 ATCA_STATUS packHex(const char* ascii_hex, size_t ascii_hex_len, char* packed_hex, size_t* packed_len);
+
+#if !defined(ARDUINO)
 bool isDigit(char c);
-bool isWhiteSpace(char c);
 bool isAlpha(char c);
+#endif
+
+bool isWhiteSpace(char c);
 bool isHexAlpha(char c);
 bool isHex(char c);
 bool isHexDigit(char c);
