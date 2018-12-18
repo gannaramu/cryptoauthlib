@@ -1,8 +1,7 @@
-/**
- * \file
- * \brief ATCA Hardware abstraction layer for I2C bit banging.
+/** \file
+ *  \brief Timer Utility Functions for Arduino
  *
- * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2018 Gabriel Notman.
  *
  * \page License
  *
@@ -25,51 +24,43 @@
  * THIS SOFTWARE.
  */
 
-#ifndef HAL_I2C_BITBANG_H_
-#define HAL_I2C_BITBANG_H_
-
-
-#if defined(ARDUINO)
-#include "i2c_bitbang_arduino.h"
-#endif
-
-#if defined(BOARD) && (BOARD == AT88CK9000)
-#include "i2c_bitbang_at88ck9000.h"
-#endif
-
-#if    (SAMD21 == 1)
-#include "i2c_bitbang_samd21.h"
-#endif
-
+#include "atca_hal.h"
+#include "Arduino.h"
 
 /**
  * \defgroup hal_ Hardware abstraction layer (hal_)
  *
- * \brief These methods define the hardware abstraction layer for
- *        communicating with a CryptoAuth device using I2C bit banging.
+ * \brief These methods define the hardware abstraction layer for communicating with a CryptoAuth device
    @{ */
 
-/**
- * \brief This enumeration lists flags for I2C read or write addressing.
- */
-enum i2c_read_write_flag
+void atca_delay_us(uint32_t delay)
 {
-    I2C_WRITE = (uint8_t)0x00,  //!< write command flag
-    I2C_READ  = (uint8_t)0x01   //!< read command flag
-};
+	// use Arduino supplied delay microseconds
+    delayMicroseconds(delay);
+}
 
 /**
- * \brief This is the hal_data for ATCA HAL.
+ * \brief This function delays for a number of tens of microseconds.
+ *
+ * \param[in] delay number of 0.01 milliseconds to delay
  */
-typedef struct atcaI2Cmaster
+void atca_delay_10us(uint32_t delay)
 {
-    uint32_t pin_sda;
-    uint32_t pin_scl;
-    int      ref_ct;
-    //! for conveniences during interface release phase
-    int bus_index;
-} ATCAI2CMaster_t;
+	// use Arduino supplied delay microseconds
+    delayMicroseconds( delay * 10 );
+}
+
+/**
+ * \brief This function delays for a number of milliseconds.
+ *        You can override this function if you like to do
+ *        something else in your system while delaying.
+ * \param[in] delay number of milliseconds to delay
+ */
+
+void atca_delay_ms(uint32_t delayms)
+{
+	// use Arduino supplied delay
+    delay(delayms);
+}
 
 /** @} */
-
-#endif /* HAL_I2C_BITBANG_H_ */

@@ -25,7 +25,9 @@
  * THIS SOFTWARE.
  */
 
+#if !defined(ARDUINO)
 #include <asf.h>
+#endif
 #include <string.h>
 #include <stdio.h>
 #include "atca_hal.h"
