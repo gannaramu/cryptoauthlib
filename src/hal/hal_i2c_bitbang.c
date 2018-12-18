@@ -27,6 +27,8 @@
 
 #if !defined(ARDUINO)
 #include <asf.h>
+#else
+#include "arduino_hal_select.h"
 #endif
 #include <string.h>
 #include <stdio.h>
@@ -35,7 +37,7 @@
 #include "hal_i2c_bitbang.h"
 #include "atca_execution.h"
 
-
+#if defined(ARDUINO) && defined(USE_ARDUINO_BITBANG_I2C)
 /**
  * \defgroup hal_ Hardware abstraction layer (hal_)
  *
@@ -555,5 +557,6 @@ ATCA_STATUS hal_i2c_release(void *hal_data)
 
     return ATCA_SUCCESS;
 }
+#endif
 
 /** @} */
