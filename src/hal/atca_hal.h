@@ -78,6 +78,9 @@ ATCA_STATUS hal_check_wake(const uint8_t* response, int response_size);
 // include implementations for both interfaces in the HAL.
 
 // At least one of these symbols will be defined in the project or makefile for each application
+#if defined(ARDUINO)
+#define ATCA_HAL_I2C // Arduino only supports i2c for now 
+#endif
 //#define ATCA_HAL_I2C
 //#define ATCA_HAL_SWI
 //#define ATCA_HAL_SPI
