@@ -95,10 +95,17 @@ ATCA_STATUS hal_i2c_discover_devices(int bus_num, ATCAIfaceCfg cfg[], int *found
     ATCAIfaceCfg discoverCfg = {
         .iface_type             = ATCA_I2C_IFACE,
         .devtype                = ATECC508A,
+#if defined(ARDUINO)
+        .iface.atcai2c.slave_address  = 0x07,
+        .iface.atcai2c.bus            = bus_num,
+        .iface.atcai2c.baud           = 400000,
+        //.iface.atcai2c.baud            = 100000,
+#else
         .atcai2c.slave_address  = 0x07,
         .atcai2c.bus            = bus_num,
         .atcai2c.baud           = 400000,
-        //.atcai2c.baud = 100000,
+        //.atcai2c.baud           = 100000,
+#endif    
         .wake_delay             = 800,
         .rx_retries             = 3
     };
@@ -129,7 +136,11 @@ ATCA_STATUS hal_i2c_discover_devices(int bus_num, ATCAIfaceCfg cfg[], int *found
     // all valid 7-bit addresses go from 0x07 to 0x78
     for (slaveAddress = 0x07; slaveAddress <= 0x78; slaveAddress++)
     {
+#if defined(ARDUINO)
+        discoverCfg.iface.atcai2c.slave_address = slaveAddress << 1;  // turn it into an 8-bit address which is what the rest of the i2c HAL is expecting when a packet is sent
+#else
         discoverCfg.atcai2c.slave_address = slaveAddress << 1;  // turn it into an 8-bit address which is what the rest of the i2c HAL is expecting when a packet is sent
+#endif
 
         memset(packet.data, 0x00, sizeof(packet.data));
         // build an info command
@@ -217,7 +228,11 @@ static ATCA_STATUS hal_i2c_send_slave_address(ATCAIface iface, uint8_t RorW)
 
     ATCA_STATUS status = ATCA_TX_TIMEOUT;
 
+#if defined(ARDUINO)
+    uint8_t sla = cfg->iface.atcai2c.slave_address | RorW;
+#else
     uint8_t sla = cfg->atcai2c.slave_address | RorW;
+#endif
 
     i2c_send_start();
 
@@ -250,25 +265,44 @@ static ATCA_STATUS hal_i2c_send_slave_address(ATCAIface iface, uint8_t RorW)
  */
 ATCA_STATUS hal_i2c_init(void *hal, ATCAIfaceCfg *cfg)
 {
+#if defined(ARDUINO)
+    if (cfg->iface.atcai2c.bus >= MAX_I2C_BUSES)
+#else
     if (cfg->atcai2c.bus >= MAX_I2C_BUSES)
+#endif
     {
         return ATCA_COMM_FAIL;
     }
+#if defined(ARDUINO)
+    ATCAI2CMaster_t* data = &i2c_hal_data[cfg->iface.atcai2c.bus];
+#else
     ATCAI2CMaster_t* data = &i2c_hal_data[cfg->atcai2c.bus];
+#endif
 
     if (data->ref_ct <= 0)
     {
         // Bus isn't being used, enable it
 
         // assign GPIO pins
+#if defined(ARDUINO)
+        i2c_hal_data[cfg->iface.atcai2c.bus].pin_sda = i2c_buses_default.pin_sda[cfg->iface.atcai2c.bus];
+        i2c_hal_data[cfg->iface.atcai2c.bus].pin_scl = i2c_buses_default.pin_scl[cfg->iface.atcai2c.bus];
+
+        i2c_set_pin(i2c_hal_data[cfg->iface.atcai2c.bus].pin_sda, i2c_hal_data[cfg->iface.atcai2c.bus].pin_scl);
+#else
         i2c_hal_data[cfg->atcai2c.bus].pin_sda = i2c_buses_default.pin_sda[cfg->atcai2c.bus];
         i2c_hal_data[cfg->atcai2c.bus].pin_scl = i2c_buses_default.pin_scl[cfg->atcai2c.bus];
 
         i2c_set_pin(i2c_hal_data[cfg->atcai2c.bus].pin_sda, i2c_hal_data[cfg->atcai2c.bus].pin_scl);
+#endif
         i2c_enable();
 
         // store this for use during the release phase
+#if defined(ARDUINO)
+        data->bus_index = cfg->iface.atcai2c.bus;
+#else
         data->bus_index = cfg->atcai2c.bus;
+#endif
         // buses are shared, this is the first instance
         data->ref_ct = 1;
     }
@@ -307,7 +341,11 @@ ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t *txdata, int txlength)
 
     ATCA_STATUS status = ATCA_TX_TIMEOUT;
 
-    int bus     = cfg->atcai2c.bus;
+#if defined(ARDUINO)
+    int bus = cfg->iface.atcai2c.bus;
+#else
+    int bus = cfg->atcai2c.bus;
+#endif
 
     txdata[0] = 0x03;   //!< Word Address Value = Command
     txlength++;         //!< count Word Address byte towards txlength
@@ -347,7 +385,11 @@ ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t *rxdata, uint16_t *rxlength
 {
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
     ATCA_STATUS status = !ATCA_SUCCESS;
-    int bus     = cfg->atcai2c.bus;
+#if defined(ARDUINO)
+    int bus = cfg->iface.atcai2c.bus;
+#else
+    int bus = cfg->atcai2c.bus;
+#endif
     int retries = cfg->rx_retries;
     uint16_t rxdata_max_size = *rxlength;
 
@@ -406,7 +448,11 @@ ATCA_STATUS hal_i2c_wake(ATCAIface iface)
 
     ATCA_STATUS status = ATCA_WAKE_FAILED;
 
-    int bus     = cfg->atcai2c.bus;
+#if defined(ARDUINO)
+    int bus = cfg->iface.atcai2c.bus;
+#else
+    int bus = cfg->atcai2c.bus;
+#endif
     uint8_t data[4] = { 0x00, 0x00, 0x00, 0x00 };
     uint16_t data_size = sizeof(data);
 
@@ -439,7 +485,11 @@ ATCA_STATUS hal_i2c_idle(ATCAIface iface)
 
     ATCA_STATUS status = ATCA_TX_TIMEOUT;
 
-    int bus     = cfg->atcai2c.bus;
+#if defined(ARDUINO)
+    int bus = cfg->iface.atcai2c.bus;
+#else
+    int bus = cfg->atcai2c.bus;
+#endif
 
     // Set I2C pins
     i2c_set_pin(i2c_hal_data[bus].pin_sda, i2c_hal_data[bus].pin_scl);
@@ -466,7 +516,11 @@ ATCA_STATUS hal_i2c_sleep(ATCAIface iface)
 
     ATCA_STATUS status = ATCA_TX_TIMEOUT;
 
-    int bus     = cfg->atcai2c.bus;
+#if defined(ARDUINO)
+    int bus = cfg->iface.atcai2c.bus;
+#else
+    int bus = cfg->atcai2c.bus;
+#endif
 
     // Set I2C pins
     i2c_set_pin(i2c_hal_data[bus].pin_sda, i2c_hal_data[bus].pin_scl);

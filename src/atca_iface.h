@@ -112,8 +112,11 @@ typedef struct
             ATCA_STATUS (*halsleep)(void *iface);
             ATCA_STATUS (*halrelease)(void* hal_data);
         } atcacustom;
-
+#if defined(ARDUINO)
+    } iface;
+#else
     };
+#endif
 
     uint16_t wake_delay;    // microseconds of tWHI + tWLO which varies based on chip type
     int      rx_retries;    // the number of retries to attempt for receiving bytes
